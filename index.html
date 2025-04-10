@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,28 +7,8 @@
     <title>BukidNet IPTV Streaming</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.0/hls.min.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.6/shaka-player.compiled.min.js"></script>
-    <!-- Add Lottie Player -->
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <link rel="icon" href="bukidnetlogo.png" type="image/png">
     <link rel="stylesheet" href="style.css">
-    <style>
-        #animationContainer {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-        }
-        
-        #selectMessage {
-            margin-top: 20px;
-            font-size: 24px;
-            color: white;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-    </style>
 </head>
 <body>
     
@@ -47,20 +28,15 @@
     </div>
     
     <div class="main-content">
-        <!-- Animation/Loading Container -->
-        <div id="animationContainer">
-            <lottie-player id="lottieAnimation" background="transparent" speed="1" style="width: 300px; height: 300px;" loop autoplay></lottie-player>
-            <div id="selectMessage">Select a channel</div>
-        </div>
-
+        
         <!-- HLS/YouTube Player -->
-        <div id="videoContainer" style="display: none;">
+        <div id="videoContainer">
             <iframe id="videoFrame" width="560" height="315" frameborder="0" allowfullscreen></iframe>
-            <video id="videoPlayer" controls autoplay muted playsinline></video>
+            <video id="videoPlayer" controls autoplay></video>
         </div>
 
         <!-- Shaka Player for MPEG-DASH -->
-        <div id="shakaContainer" style="display: none;">
+        <div id="shakaContainer">
             <video id="shakaPlayer" controls autoplay playsinline></video>
         </div>
     </div>
@@ -72,21 +48,16 @@
     const toggleBtn = document.getElementById("sidebarToggle");
     const sidebar = document.getElementById("sidebar");
     const videoPlayer = document.getElementById("videoPlayer");
-    const animationContainer = document.getElementById("animationContainer");
-    const videoContainer = document.getElementById("videoContainer");
-    const shakaContainer = document.getElementById("shakaContainer");
-    const lottiePlayer = document.getElementById("lottieAnimation");
     
-    // Set the animation source (using the local file)
-    lottiePlayer.load("selectAnimation - 1744252999877.json");
+    // Default channel that will autoplay
+    const DEFAULT_CHANNEL = {
+        name: "BukidNet Default",
+        url: "https://streams2.sofast.tv/sofastplayout/33c31ac4-51fa-46ae-afd0-0d1fe5e60a80_0_HLS/master.m3u8", // Sample HLS stream
+        type: "hls"
+    };
     
     // Function to play HLS stream
     function playHlsStream(url) {
-        // Hide animation and show video player
-        animationContainer.style.display = "none";
-        videoContainer.style.display = "flex";
-        shakaContainer.style.display = "none";
-        
         if (Hls.isSupported()) {
             const hls = new Hls();
             hls.loadSource(url);
@@ -94,6 +65,7 @@
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
                 videoPlayer.play().catch(e => {
                     console.log("Autoplay prevented:", e);
+                    // Show play button to user
                     videoPlayer.controls = true;
                 });
             });
@@ -109,20 +81,26 @@
         }
     }
     
-    // Initialize default view on load
+    // Initialize default channel on load
     window.addEventListener("DOMContentLoaded", () => {
-        // Show the animation container by default
-        animationContainer.style.display = "flex";
-        videoContainer.style.display = "none";
-        shakaContainer.style.display = "none";
+        // Show the video player and hide others
+        document.getElementById("videoContainer").style.display = "flex";
+        document.getElementById("shakaContainer").style.display = "none";
+        document.getElementById("videoFrame").style.display = "none";
+        videoPlayer.style.display = "block";
         
-        // Add click handlers for all channel items
-        document.querySelectorAll('.channel-item').forEach(item => {
-            item.addEventListener('click', function() {
-                // Hide animation when a channel is selected
-                animationContainer.style.display = "none";
-            });
+        // Play the default channel
+        playHlsStream(DEFAULT_CHANNEL.url);
+        
+        // You can also add this channel to your channel list
+        const channelList = document.getElementById("combinedChannels");
+        const defaultChannelElement = document.createElement("div");
+        defaultChannelElement.textContent = DEFAULT_CHANNEL.name;
+        defaultChannelElement.classList.add("active-channel"); // Add active class
+        defaultChannelElement.addEventListener("click", () => {
+            playHlsStream(DEFAULT_CHANNEL.url);
         });
+        channelList.prepend(defaultChannelElement);
     });
     
     toggleBtn.addEventListener("click", () => {
