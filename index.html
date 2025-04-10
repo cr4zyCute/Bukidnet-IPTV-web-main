@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BukidNet IPTV Streaming</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.0/hls.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.6/shaka-player.compiled.min.js"></script>
+    <!-- Add Lottie Player -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <link rel="icon" href="bukidnetlogo.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #animationContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+        
+        #selectMessage {
+            margin-top: 20px;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="sidebar">    
+        <img src="bukidnetlogo.png" alt="bukidnet Logo" style="height: 120px; width: 120px; margin-left: 0 auto; display: block;">
+        <h2>Channels</h2>
+
+        <div id="searchContainer">
+            <input type="text" id="channelSearch" placeholder="Search channels...">
+            <span id="clearSearch" title="Clear">&times;</span>
+        </div>
+        
+        <!-- Combined Channel List -->
+        <div id="combinedChannels">
+            <!-- Channels will be loaded dynamically -->
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <!-- Animation/Loading Container -->
+        <div id="animationContainer">
+            <lottie-player id="lottieAnimation" background="transparent" speed="1" style="width: 300px; height: 300px;" loop autoplay></lottie-player>
+            <div id="selectMessage">Select a channel</div>
+        </div>
+
+        <!-- HLS/YouTube Player -->
+        <div id="videoContainer" style="display: none;">
+            <iframe id="videoFrame" width="560" height="315" frameborder="0" allowfullscreen></iframe>
+            <video id="videoPlayer" controls autoplay muted playsinline></video>
+        </div>
+
+        <!-- Shaka Player for MPEG-DASH -->
+        <div id="shakaContainer" style="display: none;">
+            <video id="shakaPlayer" controls autoplay playsinline></video>
+        </div>
+    </div>
+    <button id="sidebarToggle">☰ Channels</button>
+    <script src="search.js"></script>
+    
+    <script src="script.js"></script>
+    <script>
+    const toggleBtn = document.getElementById("sidebarToggle");
+    const sidebar = document.getElementById("sidebar");
+    const videoPlayer = document.getElementById("videoPlayer");
+    const animationContainer = document.getElementById("animationContainer");
+    const videoContainer = document.getElementById("videoContainer");
+    const shakaContainer = document.getElementById("shakaContainer");
+    const lottiePlayer = document.getElementById("lottieAnimation");
+    
+    // Set the animation source (using the local file)
+    lottiePlayer.load("selectAnimation - 1744252999877.json");
+    
+    // Function to play HLS stream
+    function playHlsStream(url) {
+        // Hide animation and show video player
+        animationContainer.style.display = "none";
+        videoContainer.style.display = "flex";
+        shakaContainer.style.display = "none";
+        
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(videoPlayer);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                videoPlayer.play().catch(e => {
+                    console.log("Autoplay prevented:", e);
+                    videoPlayer.controls = true;
+                });
+            });
+        } else if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+            // For Safari
+            videoPlayer.src = url;
+            videoPlayer.addEventListener("loadedmetadata", function() {
+                videoPlayer.play().catch(e => {
+                    console.log("Autoplay prevented:", e);
+                    videoPlayer.controls = true;
+                });
+            });
+        }
+    }
+    
+    // Initialize default view on load
+    window.addEventListener("DOMContentLoaded", () => {
+        // Show the animation container by default
+        animationContainer.style.display = "flex";
+        videoContainer.style.display = "none";
+        shakaContainer.style.display = "none";
+        
+        // Add click handlers for all channel items
+        document.querySelectorAll('.channel-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Hide animation when a channel is selected
+                animationContainer.style.display = "none";
+            });
+        });
+    });
+    
+    toggleBtn.addEventListener("click", () => {
+        sidebar.classList.toggle("active");
+        // Toggle between X and Channels text
+        if (sidebar.classList.contains("active")) {
+            toggleBtn.innerHTML = "✕";
+        } else {
+            toggleBtn.innerHTML = "☰ Channels";
+        }
+    });
+    
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+
+        // If sidebar is open, and you click outside of it & the toggle button
+        if (sidebar.classList.contains('active') && 
+            !sidebar.contains(event.target) && 
+            !toggleBtn.contains(event.target)) {
+            sidebar.classList.remove('active');
+            toggleBtn.innerHTML = "☰ Channels";
+        }
+    });
+    </script>
+</body>
+</html>
